@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useAccount } from "@/components/AccountContext";
 import CommitSearchPanel from "@/components/CommitSearchPanel";
 import type { CommitItem } from "@/lib/github";
@@ -151,8 +151,8 @@ export default function ContributionGraph() {
   const [error, setError] = useState<string | null>(null);
   const [commits, setCommits] = useState<CommitItem[]>([]);
   const [usesTouchTooltip, setUsesTouchTooltip] = useState(false);
-  const [repo, setRepo] = useState<string>("all");
-  const [repoOptions, setRepoOptions] = useState<string[]>([]);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
 
   // Compare mode state
   const [compareMode, setCompareMode] = useState(false);
@@ -465,6 +465,10 @@ export default function ContributionGraph() {
       : [];
 
   const displayData = compareMode ? mergedData : data;
+  const filteredData = useMemo(() => {
+    if (selectedRepos.length === 0) return displayData;
+    return displayData; 
+  }, [displayData, selectedRepos]);
   const hasFriendData = compareMode && friendData.length > 0 && !compareError;
   const tooltipTrigger = usesTouchTooltip ? "click" : "hover";
   const totalCommits = compareMode
@@ -508,18 +512,39 @@ export default function ContributionGraph() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Repo Filter */}
-          <select
-            value={repo}
-            onChange={(e) => setRepo(e.target.value)}
-            className="bg-slate-700 text-slate-300 text-sm rounded-lg px-2 py-1 border border-slate-600"
-          >
-            <option value="all">All repos</option>
-            {repoOptions.map((r) => (
-              <option key={r} value={r}>
-                {r.split("/")[1]}
-              </option>
-            ))}
-          </select>
+          {/* Dynamic Repository Multi-Select Badges */}
+  <div className="flex flex-wrap gap-2 items-center">
+    <button
+      onClick={() => setSelectedRepos([])}
+      className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all border ${
+        selectedRepos.length === 0
+          ? "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-100"
+          : "bg-transparent text-slate-400 border-slate-600 hover:bg-slate-800"
+      }`}
+    >
+      All Repositories
+    </button>
+    {repoOptions.map((r) => {
+      const isSelected = selectedRepos.includes(r);
+      return (
+        <button
+          key={r}
+          onClick={() => {
+            setSelectedRepos((prev) =>
+              isSelected ? prev.filter((name) => name !== r) : [...prev, r]
+            );
+          }}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all border ${
+            isSelected
+              ? "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-700 dark:text-slate-100"
+              : "bg-transparent text-slate-400 border-slate-600 hover:bg-slate-800"
+          }`}
+        >
+          {r.split("/")[1] || r}
+        </button>
+      );
+    })}
+  </div>
 
           {/* Range buttons */}
           <div className="flex gap-1 rounded-lg border border-[var(--border)] bg-[var(--background)] p-1">
@@ -670,7 +695,7 @@ export default function ContributionGraph() {
         <div className="h-[220px] w-full overflow-hidden">
 <ResponsiveContainer width="100%" height="100%">
   {chartType === "bar" ? (
-    <BarChart data={displayData}>
+    <BarChart data={filteredData}>
       <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
       <XAxis
         dataKey={compareMode ? "date" : "day"}
@@ -722,7 +747,7 @@ export default function ContributionGraph() {
                 )}
               </BarChart>
             ) : chartType === "line" ? (
-              <LineChart data={displayData}>
+              <LineChart data={filteredData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey={compareMode ? "date" : "day"}
@@ -781,7 +806,7 @@ export default function ContributionGraph() {
                 )}
               </LineChart>
             ) : (
-              <AreaChart data={displayData}>
+              <AreaChart data={filteredData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                 <XAxis
                   dataKey={compareMode ? "date" : "day"}

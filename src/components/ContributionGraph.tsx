@@ -309,7 +309,7 @@ export default function ContributionGraph() {
     return () => {
       active = false;
     };
-  }, [days, selectedAccount, customFrom, customTo, customLabel, repo]);
+  }, [days, selectedAccount, customFrom, customTo, customLabel]);
 
   // Fetch friend data when compare mode is on and compareUser changes
   useEffect(() => {

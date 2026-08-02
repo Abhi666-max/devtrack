@@ -152,8 +152,6 @@ export default function ContributionGraph() {
   const [commits, setCommits] = useState<CommitItem[]>([]);
   const [usesTouchTooltip, setUsesTouchTooltip] = useState(false);
   const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
-  const [selectedRepos, setSelectedRepos] = useState<string[]>([]);
-
   // Compare mode state
   const [compareMode, setCompareMode] = useState(false);
   const [compareUser, setCompareUser] = useState<string | null>(null);
